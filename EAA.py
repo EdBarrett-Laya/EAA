@@ -169,6 +169,7 @@ def update_chart(selected_tests):
 
     return fig, total_summary
 
+# 
 
 server = app.server  # Gunicorn needs this!
 
