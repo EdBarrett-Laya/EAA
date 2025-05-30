@@ -62,7 +62,6 @@ rule_categories = {
     'link-in-text-block': 'Navigation', 'unexpected-change-on-focus': 'Navigation'
 }
 
-
 df['Rule Category'] = df['Rule ID'].map(rule_categories).fillna('Other')
 
 # Initialize Dash App
@@ -73,8 +72,10 @@ app.layout = html.Div([
     
     dcc.Dropdown(
         id='test-title-dropdown',
-        options=[{'label': t, 'value': t} for t in df['Test Title'].unique()],
-        placeholder="Select a Test Title",
+        options=[{'label': 'All', 'value': 'All'}] + [{'label': t, 'value': t} for t in df['Test Title'].unique()],
+        value=['All'],  # Default selection
+        multi=True,  # Enable multiple selections
+        placeholder="Select Test Titles",
     ),
     
     dcc.Graph(id='category-bar-chart'),
@@ -85,70 +86,47 @@ app.layout = html.Div([
     Output('category-bar-chart', 'figure'),
     Input('test-title-dropdown', 'value')
 )
-def update_chart(selected_test):
-    filtered_df = df if selected_test is None else df[df['Test Title'] == selected_test]
+def update_chart(selected_tests):
+    if "All" in selected_tests or not selected_tests:
+        filtered_df = df
+    else:
+        filtered_df = df[df['Test Title'].isin(selected_tests)]
+
     grouped_df = filtered_df.groupby(['Rule Category', 'Impact']).size().reset_index(name='count')
 
     fig = px.bar(grouped_df,
                  x="Rule Category",
                  y="count",
                  color="Impact",
-                 title=f"Accessibility Issue Breakdown for {selected_test}" if selected_test else "Select a Test Title")
+                 title="Accessibility Issues Overview" if "All" in selected_tests else f"Issues for {', '.join(selected_tests)}")
 
     return fig
 
 @app.callback(
-    Output('rule-breakdown.callback(
     Output('rule-breakdown', 'children'),
-    Input('category', 'children'),
-    Input('category-bar-chart', 'click-bar-chart', 'clickData'),
-    InputData'),
+    Input('category-bar-chart', 'clickData'),
     Input('test-title-dropdown', 'value')
-)
-def display_rule_breakdown(clickData, selected_tests):
-    if not clickData:
-       ('test-title-dropdown', 'value')
 )
 def display_rule_breakdown(clickData, selected_tests):
     if not clickData:
         return "Click on a bar to see individual rules."
 
-    clicked return "Click on a bar to see individual rules."
-
-    clicked_category = click_category = clickData['points'][0]['x']
-    filteredData['points'][0]['x']
-    filtered_df = df[df['Rule Category'] ==_df = df[df['Rule Category'] == clicked_category clicked_category]
-
-    if "All" not]
+    clicked_category = clickData['points'][0]['x']
+    filtered_df = df[df['Rule Category'] == clicked_category]
 
     if "All" not in selected_tests:
-        filtered in selected_tests:
-        filtered_df = filtered_df_df = filtered_df[filtered_df['Test Title'].isin(selected_tests[filtered_df['Test Title'].isin(selected_tests)]
+        filtered_df = filtered_df[filtered_df['Test Title'].isin(selected_tests)]
 
     grouped_data = filtered_df.groupby(['Rule ID', 'Impact']).size().reset_index(name='count')
 
-)]
-
-    grouped_data = filtered_df.groupby(['Rule ID', 'Impact']).size().reset_index(name='count')
-
-    # Filter out    # Filter out rows where count rows where count == 0
-    grouped == 0
+    # Filter out rows where count == 0
     grouped_data = grouped_data[grouped_data['count'] > 0]
 
-    breakdown_data = grouped_data[grouped_data['count'] > 0]
-
-    breakdown_table = html.Table_table = html.Table([
-        html.Tr([html.Th("Rule ID"), html.Th("Impact"), html.Th("Count")])
-   ([
+    breakdown_table = html.Table([
         html.Tr([html.Th("Rule ID"), html.Th("Impact"), html.Th("Count")])
     ] + [
         html.Tr([html.Td(rule), html.Td(impact), html.Td(count)])
-        ] + [
-        html.Tr([html.Td(rule), html.Td(impact), html.Td(count)])
-        for rule, impact for rule, impact, count in grouped, count in grouped_data.values
-    ])
-
-    return breakdown_data.values
+        for rule, impact, count in grouped_data.values
     ])
 
     return breakdown_table
