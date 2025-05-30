@@ -5,7 +5,7 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 
 # Load dataset
-df = pd.read_csv(r'C:\Users\barrette\Python_Projects\EAA\input.csv')
+df = pd.read_csv(r'input.csv')
 
 impact_order = ['critical', 'serious', 'moderate', 'minor']
 df['Impact'] = pd.Categorical(df['Impact'], categories=impact_order, ordered=True)
