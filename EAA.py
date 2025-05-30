@@ -78,9 +78,15 @@ app.layout = html.Div([
         placeholder="Select Test Titles",
     ),
     
+    html.Div(id="total-issues-summary"),  # Total issues display
+    
     dcc.Graph(id='category-bar-chart'),
-    html.Div(id='rule-breakdown')
+    
+    html.Div(id="rule-breakdown"),  # Table displaying breakdown
+    
+    html.Div(id="selected-summary")  # Summary for selected test titles & rule categories
 ])
+
 
 @app.callback(
     Output('category-bar-chart', 'figure'),
@@ -103,13 +109,14 @@ def update_chart(selected_tests):
     return fig
 
 @app.callback(
-    Output('rule-breakdown', 'children'),
+    [Output('rule-breakdown', 'children'),
+     Output('selected-summary', 'children')],
     Input('category-bar-chart', 'clickData'),
     Input('test-title-dropdown', 'value')
 )
 def display_rule_breakdown(clickData, selected_tests):
     if not clickData:
-        return "Click on a bar to see individual rules."
+        return "Click on a bar to see individual rules.", ""
 
     clicked_category = clickData['points'][0]['x']
     filtered_df = df[df['Rule Category'] == clicked_category]
@@ -118,9 +125,13 @@ def display_rule_breakdown(clickData, selected_tests):
         filtered_df = filtered_df[filtered_df['Test Title'].isin(selected_tests)]
 
     grouped_data = filtered_df.groupby(['Rule ID', 'Impact']).size().reset_index(name='count')
+    grouped_data = grouped_data[grouped_data['count'] > 0]  # Remove zero-count rows
 
-    # Filter out rows where count == 0
-    grouped_data = grouped_data[grouped_data['count'] > 0]
+    total_selected_issues = len(filtered_df)
+    total_selected_percentage = (total_selected_issues / len(df[df['Test Title'].isin(selected_tests)])) * 100 if selected_tests else 0
+    total_overall_percentage = (total_selected_issues / len(df)) * 100
+
+    selected_summary = f"Total Selected Issues: {total_selected_issues} ({total_selected_percentage:.2f}% of selected test titles, {total_overall_percentage:.2f}% of all issues)"
 
     breakdown_table = html.Table([
         html.Tr([html.Th("Rule ID"), html.Th("Impact"), html.Th("Count")])
@@ -129,9 +140,37 @@ def display_rule_breakdown(clickData, selected_tests):
         for rule, impact, count in grouped_data.values
     ])
 
-    return breakdown_table
+    return breakdown_table, selected_summary
 
-server = app.server  # ✅ Gunicorn needs this!
+    @app.callback(
+    [Output('category-bar-chart', 'figure'),
+     Output('total-issues-summary', 'children')],
+    Input('test-title-dropdown', 'value')
+)
+def update_chart(selected_tests):
+    if "All" in selected_tests or not selected_tests:
+        filtered_df = df
+    else:
+        filtered_df = df[df['Test Title'].isin(selected_tests)]
+
+    total_issues_selected = len(filtered_df)
+    total_issues_all = len(df)
+    percentage_selected = (total_issues_selected / total_issues_all) * 100
+
+    total_summary = f"Total Issues: {total_issues_selected} ({percentage_selected:.2f}% of all issues)"
+
+    grouped_df = filtered_df.groupby(['Rule Category', 'Impact']).size().reset_index(name='count')
+
+    fig = px.bar(grouped_df,
+                 x="Rule Category",
+                 y="count",
+                 color="Impact",
+                 title="Accessibility Issues Overview" if "All" in selected_tests else f"Issues for {', '.join(selected_tests)}")
+
+    return fig, total_summary
+
+
+server = app.server  # Gunicorn needs this!
 
 if __name__ == "__main__":
     app.run(debug=True)
