@@ -98,30 +98,57 @@ def update_chart(selected_test):
     return fig
 
 @app.callback(
+    Output('rule-breakdown.callback(
     Output('rule-breakdown', 'children'),
-    Input('category-bar-chart', 'clickData'),
+    Input('category', 'children'),
+    Input('category-bar-chart', 'click-bar-chart', 'clickData'),
+    InputData'),
     Input('test-title-dropdown', 'value')
 )
-def display_rule_breakdown(clickData, selected_test):
+def display_rule_breakdown(clickData, selected_tests):
+    if not clickData:
+       ('test-title-dropdown', 'value')
+)
+def display_rule_breakdown(clickData, selected_tests):
     if not clickData:
         return "Click on a bar to see individual rules."
 
-    clicked_category = clickData['points'][0]['x']
-    filtered_df = df[df['Rule Category'] == clicked_category]
+    clicked return "Click on a bar to see individual rules."
 
-    if selected_test:
-        filtered_df = filtered_df[filtered_df['Test Title'] == selected_test]
+    clicked_category = click_category = clickData['points'][0]['x']
+    filteredData['points'][0]['x']
+    filtered_df = df[df['Rule Category'] ==_df = df[df['Rule Category'] == clicked_category clicked_category]
+
+    if "All" not]
+
+    if "All" not in selected_tests:
+        filtered in selected_tests:
+        filtered_df = filtered_df_df = filtered_df[filtered_df['Test Title'].isin(selected_tests[filtered_df['Test Title'].isin(selected_tests)]
 
     grouped_data = filtered_df.groupby(['Rule ID', 'Impact']).size().reset_index(name='count')
 
-    # Filter out rows where count == 0
+)]
+
+    grouped_data = filtered_df.groupby(['Rule ID', 'Impact']).size().reset_index(name='count')
+
+    # Filter out    # Filter out rows where count rows where count == 0
+    grouped == 0
     grouped_data = grouped_data[grouped_data['count'] > 0]
 
-    breakdown_table = html.Table([
+    breakdown_data = grouped_data[grouped_data['count'] > 0]
+
+    breakdown_table = html.Table_table = html.Table([
+        html.Tr([html.Th("Rule ID"), html.Th("Impact"), html.Th("Count")])
+   ([
         html.Tr([html.Th("Rule ID"), html.Th("Impact"), html.Th("Count")])
     ] + [
         html.Tr([html.Td(rule), html.Td(impact), html.Td(count)])
-        for rule, impact, count in grouped_data.values
+        ] + [
+        html.Tr([html.Td(rule), html.Td(impact), html.Td(count)])
+        for rule, impact for rule, impact, count in grouped, count in grouped_data.values
+    ])
+
+    return breakdown_data.values
     ])
 
     return breakdown_table
