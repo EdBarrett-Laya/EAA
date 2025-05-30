@@ -93,8 +93,8 @@ def update_chart(selected_test):
 
     return fig
 
-
+server = app.server  # ✅ Gunicorn needs this!
 
 # Run the Dash app
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)  
