@@ -87,27 +87,6 @@ app.layout = html.Div([
     html.Div(id="selected-summary")  # Summary for selected test titles & rule categories
 ])
 
-
-@app.callback(
-    Output('category-bar-chart', 'figure'),
-    Input('test-title-dropdown', 'value')
-)
-def update_chart(selected_tests):
-    if "All" in selected_tests or not selected_tests:
-        filtered_df = df
-    else:
-        filtered_df = df[df['Test Title'].isin(selected_tests)]
-
-    grouped_df = filtered_df.groupby(['Rule Category', 'Impact']).size().reset_index(name='count')
-
-    fig = px.bar(grouped_df,
-                 x="Rule Category",
-                 y="count",
-                 color="Impact",
-                 title="Accessibility Issues Overview" if "All" in selected_tests else f"Issues for {', '.join(selected_tests)}")
-
-    return fig
-
 @app.callback(
     [Output('rule-breakdown', 'children'),
      Output('selected-summary', 'children')],
@@ -142,11 +121,12 @@ def display_rule_breakdown(clickData, selected_tests):
 
     return breakdown_table, selected_summary
 
-    @app.callback(
-    [Output('category-bar-chart', 'figure'),
-     Output('total-issues-summary', 'children')],
+@app.callback(
+    Output('category-bar-chart', 'figure'),
+    Output('total-issues-summary', 'children'),
     Input('test-title-dropdown', 'value')
 )
+
 def update_chart(selected_tests):
     if "All" in selected_tests or not selected_tests:
         filtered_df = df
@@ -162,10 +142,10 @@ def update_chart(selected_tests):
     grouped_df = filtered_df.groupby(['Rule Category', 'Impact']).size().reset_index(name='count')
 
     fig = px.bar(grouped_df,
-                 x="Rule Category",
-                 y="count",
-                 color="Impact",
-                 title="Accessibility Issues Overview" if "All" in selected_tests else f"Issues for {', '.join(selected_tests)}")
+                x="Rule Category",
+                y="count",
+                color="Impact",
+                title="Accessibility Issues Overview" if "All" in selected_tests else f"Issues for {', '.join(selected_tests)}")
 
     return fig, total_summary
 
