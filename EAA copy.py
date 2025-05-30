@@ -88,51 +88,6 @@ app.layout = html.Div([
 
     dcc.Graph(id='category-bar-chart', style={'margin': 'auto', 'padding': '20px'}),
 
-    # Button to open modal
-    html.Button("Accessibility Effort Estimates", id="open-modal", n_clicks=0, 
-                style={'background-color': '#4a90e2', 'color': 'white', 'padding': '12px 20px', 'border': 'none',
-                       'border-radius': '6px', 'cursor': 'pointer', 'font-size': '16px', 'font-weight': 'bold',
-                       'box-shadow': '2px 2px 8px rgba(0, 0, 0, 0.2)', 'transition': '0.3s', 'margin-bottom': '10px'}),
-
-    # Modal (Hidden by default)
-    html.Div([
-        html.Div([
-            html.H3("Accessibility Effort Estimates", style={'margin-bottom': '10px', 'color': '#2c3e50', 'font-weight': 'bold'}),
-            html.Table([
-                html.Tr([
-                    html.Th("Category", style={'background-color': '#2c3e50', 'color': 'white', 'padding': '10px'}),
-                    html.Th("Difficulty", style={'background-color': '#2c3e50', 'color': 'white', 'padding': '10px'}),
-                    html.Th("Effort Required", style={'background-color': '#2c3e50', 'color': 'white', 'padding': '10px'})
-                ])
-            ] + [
-                html.Tr([
-                    html.Td(category, style={'padding': '8px', 'border': '1px solid #ddd'}),
-                    html.Td(difficulty, style={'padding': '8px', 'border': '1px solid #ddd'}),
-                    html.Td(effort, style={'padding': '8px', 'border': '1px solid #ddd'})
-                ])
-                for category, difficulty, effort in [
-                    ("ARIA Issues", "Medium-High", "Requires knowledge of screen readers and ARIA roles"),
-                    ("Contrast & Color", "Low", "Simple CSS fixes, but may require design adjustments"),
-                    ("Focus & Keyboard", "High", "Requires testing keyboard navigation and proper focus handling"),
-                    ("Headings & Structure", "Medium", "Mostly HTML changes, but needs thoughtful restructuring"),
-                    ("Images & Alt-text", "Low-Medium", "Adding alt-text is easy, but verifying meaningful descriptions takes effort"),
-                    ("Landmarks & Structure", "Medium", "ARIA landmark usage can be subtle and must be tested thoroughly"),
-                    ("Forms & Labeling", "High", "Ensuring proper labels, associating elements correctly"),
-                    ("Dialogs & Modals", "High", "Managing focus when a modal opens/closes is tricky"),
-                    ("Navigation & Unexpected Behavior", "High", "Can involve significant JS refactoring to prevent unwanted page changes")
-                ]
-            ], style={'margin': 'auto', 'border-collapse': 'collapse', 'width': '80%', 'font-size': '16px'}),
-            html.Button("Close", id="close-modal", n_clicks=0, style={'margin-top': '10px', 'background-color': '#e74c3c',
-                                                                       'color': 'white', 'border': 'none', 'padding': '10px 18px',
-                                                                       'border-radius': '6px', 'cursor': 'pointer', 'font-size': '14px',
-                                                                       'font-weight': 'bold'}),
-        ], id="modal-box", style={
-            'padding': '25px', 'background-color': 'white', 'border-radius': '10px', 'border': '2px solid #4a90e2',
-            'position': 'absolute', 'top': '20%', 'left': '5%', 'width': '55%', 'box-shadow': '4px 4px 15px rgba(0, 0, 0, 0.2)',
-            'display': 'none'
-        })
-    ]),
-
     html.Div([
         dcc.Dropdown(
             id='category-selector',
@@ -229,28 +184,6 @@ def display_selected_categories(selected_categories):
 
     return breakdown_table, selected_summary
 
-# Callback to toggle modal visibility
-@app.callback(
-    Output("modal-box", "style"),
-    [Input("open-modal", "n_clicks"),
-     Input("close-modal", "n_clicks")],
-    prevent_initial_call=True
-)
-def toggle_modal(open_clicks, close_clicks):
-    if open_clicks and open_clicks > close_clicks:
-        return {
-            'padding': '20px',
-            'background-color': 'white',
-            'border': '1px solid black',
-            'position': 'absolute',
-            'top': '20%',
-            'left': '5%',
-            'width': '60%',
-            'box-shadow': '2px 2px 10px rgba(0, 0, 0, 0.2)',
-            'display': 'block'  # Show modal when clicked
-        }
-    
-    return {'display': 'none'}
 
 server = app.server
 
