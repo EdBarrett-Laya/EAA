@@ -45,6 +45,8 @@ app.layout = html.Div([
         ),
     ], style={'text-align': 'center'}),
     
+    dcc.Store(id='selected-categories', data=[])
+
     html.Br(),
     
     html.Div(id="total-issues-summary", style={'text-align': 'center', 'font-size': '18px', 'font-weight': 'bold'}),
@@ -57,42 +59,34 @@ app.layout = html.Div([
 ])
 
 @app.callback(
-    [Output('rule-breakdown', 'children'),
-     Output('selected-summary', 'children')],
-    Input('category-bar-chart', 'clickData'),
-    Input('test-title-dropdown', 'value'),
-    Input('column-dropdown', 'value')
+    Output('rule-breakdown', 'children'),
+    Input('selected-categories', 'data')
 )
-def display_rule_breakdown(clickData, selected_tests, selected_columns):
-    if not clickData:
-        return html.Div("Click on a bar to see individual rules.", style={'text-align': 'center', 'font-style': 'italic'}), ""
+def display_selected_categories(selected_categories):
+    if not selected_categories:
+        return html.Div("Click on bars to select categories.", style={'text-align': 'center', 'font-style': 'italic'})
 
-    clicked_category = clickData['points'][0]['x']
-    filtered_df = df[df['Rule Category'] == clicked_category]
+    # Filter dataframe based on selected categories only
+    filtered_df = df[df['Rule Category'].isin(selected_categories)]
 
-    if "All" not in selected_tests:
-        filtered_df = filtered_df[filtered_df['Test Title'].isin(selected_tests)]
-
-    selected_columns = [col for col in selected_columns if col in filtered_df.columns]
-    grouped_data = filtered_df[selected_columns].groupby(selected_columns).size().reset_index(name='count')
-    grouped_data = grouped_data[grouped_data['count'] > 0]
-
-    total_selected_issues = len(filtered_df)
-    total_selected_percentage = (total_selected_issues / len(df[df['Test Title'].isin(selected_tests)])) * 100 if selected_tests else 0
-    total_overall_percentage = (total_selected_issues / len(df)) * 100
-
-    selected_summary = f"Total Issues:\n{total_selected_issues}\n{total_selected_percentage:.2f}% of test categories\n{total_overall_percentage:.2f}% of all issues"
+    # Aggregate counts per category
+    grouped_data = filtered_df.groupby(['Rule Category']).size().reset_index(name='count')
 
     breakdown_table = html.Table([
-        html.Tr([html.Th(col, style={'padding': '15px', 'text-align': 'center', 'background-color': '#4a90e2', 'color': 'white'}) for col in selected_columns] + 
-                [html.Th("Count", style={'padding': '15px', 'text-align': 'center', 'background-color': '#4a90e2', 'color': 'white'})])
+        html.Tr([
+            html.Th("Rule Category", style={'padding': '15px', 'text-align': 'center', 'background-color': '#4a90e2', 'color': 'white'}),
+            html.Th("Count", style={'padding': '15px', 'text-align': 'center', 'background-color': '#4a90e2', 'color': 'white'})
+        ])
     ] + [
-        html.Tr([html.Td(row[col], style={'padding': '15px', 'text-align': 'center', 'border': '1px solid #ddd'}) for col in selected_columns] + 
-                [html.Td(row["count"], style={'padding': '15px', 'text-align': 'center', 'border': '1px solid #ddd'})])
+        html.Tr([
+            html.Td(row["Rule Category"], style={'padding': '15px', 'text-align': 'center', 'border': '1px solid #ddd'}),
+            html.Td(row["count"], style={'padding': '15px', 'text-align': 'center', 'border': '1px solid #ddd'})
+        ])
         for _, row in grouped_data.iterrows()
     ], style={'margin': 'auto', 'border-collapse': 'collapse', 'width': '80%', 'font-size': '16px'})
 
-    return breakdown_table, selected_summary
+    return breakdown_table
+
 
 @app.callback(
     Output('category-bar-chart', 'figure'),
@@ -120,6 +114,24 @@ def update_chart(selected_tests):
                 title="Accessibility Issues Overview" if "All" in selected_tests else f"Issues for {', '.join(selected_tests)}")
 
     return fig, total_summary
+
+@app.callback(
+    Output('selected-categories', 'data'),
+    Input('category-bar-chart', 'clickData'),
+    State('selected-categories', 'data')
+)
+def store_selected_categories(clickData, stored_categories):
+    if not clickData:
+        return stored_categories  # Keep existing selections
+
+    clicked_category = clickData['points'][0]['x']
+
+    # Append new category only if it's not already selected
+    if clicked_category not in stored_categories:
+        stored_categories.append(clicked_category)
+
+    return stored_categories
+
 
 server = app.server  # Gunicorn needs this!
 
